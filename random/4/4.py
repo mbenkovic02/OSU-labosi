@@ -165,3 +165,80 @@ conf_matrix = confusion_matrix(data_pd['target'], data_pd['cluster_mapped'])
 
 print(f'Preciznost klasifikacije: {accuracy}')
 print(f'Matrici konfuzije:\n{conf_matrix}')
+
+
+"""
+ Iris Dataset sastoji se od informacija o laticama i ˇ cašicama tri razliˇ cita cvijeta
+ irisa (Setosa, Versicolour i Virginica). Dostupan je u sklopu bibilioteke scikitlearn:
+ from sklearn import datasets
+ iris = datasets.load_iris()
+ Upoznajte se s datasetom. Podijelite ga na ulazne podatke X i izlazne podatke y predstavljene
+ klasom cvijeta. Pripremite podatke za uˇ cenje neuronske mreže (kategoriˇ cke veliˇ cine, skaliranje...).
+ Podijelite podatke na skup za uˇcenje i skup za testiranje modela u omjeru 75:25. Dodajte
+ programski kod u skriptu pomo´ cu kojeg možete odgovoriti na sljede´ ca pitanja:
+ a) Izgradite neuronsku mrežu sa sljede´ cim karakteristikama:- model oˇ cekuje ulazne podatke X- prvi skriveni sloj ima 10 neurona i koristi relu aktivacijsku funkciju- drugi skriveni sloj ima 7 neurona i koristi relu aktivacijsku funkciju- tre´ ci skriveni sloj ima 5 neurona i koristi relu aktivacijsku funkciju- izlazni sloj ima 3 neurona i koristi softmax aktivacijsku funkciju.-izme¯ du prvog i drugog te drugog i tre´ceg sloja dodajte Dropout sloj s 30% izbaˇcenih
+ neurona
+ Ispišite informacije o mreži u terminal.
+ b) Podesite proces treniranja mreže sa sljede´ cim parametrima:- loss argument: categorical_crossentropy- optimizer: adam- metrika: accuracy.
+ c) Pokrenite uˇcenje mreže sa proizvoljnim brojem epoha (pokušajte sa 500) i veliˇcinom
+ batch-a 7.
+ d) Pohranite model na tvrdi disk te preostale zadatke izvršite na temelju uˇ citanog modela.
+ e) Izvršite evaluaciju mreže na testnom skupu podataka.
+ f) Izvršite predikciju mreže na skupu podataka za testiranje. Prikažite matricu zabune za skup
+ podataka za testiranje. Komentirajte dobivene rezultate i predložite kako biste ih poboljšali,
+ ako je potrebno
+"""
+
+data_neuron = data_pd.drop(columns=['target_names'])
+
+input = ['sepal length (cm)',  'sepal width (cm)', 'petal length (cm)',  'petal width (cm)']
+
+output = 'target'
+
+X=data_neuron[input]
+y=data_neuron[output]
+
+X_train , X_test , y_train , y_test = train_test_split (X , y , test_size = 0.25 , random_state =1 )
+
+scaler = StandardScaler()
+X_train_n = scaler.fit_transform(X_train)
+X_test_n = scaler.transform(X_test)
+
+y_train_categorical = utils.to_categorical(y_train)
+y_test_categorical = utils.to_categorical(y_test)
+
+print(X_train_n.shape)
+
+
+model = keras . Sequential ()
+model . add ( layers . Input ( shape=(4,) ))
+model . add ( layers . Dense (10 , activation ="relu") )
+model.add(layers.Dropout(0.3))
+model . add ( layers . Dense (7 , activation ="relu") )
+model.add(layers.Dropout(0.3))
+model . add ( layers . Dense (5 , activation ="relu") )
+model . add ( layers . Dense (3 , activation ="softmax") )
+model . summary ()
+
+
+model . compile ( loss ="categorical_crossentropy" , optimizer ="adam", metrics = ["accuracy", ])
+
+batch_size = 7
+epochs = 500
+history = model . fit ( X_train_n , y_train_categorical , batch_size = batch_size , epochs = epochs , validation_split = 0.1)
+
+
+model.save('flo_model.keras')
+
+model = models.load_model('zadatak_1_model.keras')
+
+predictions = model . predict (X_test_n)
+
+score = model . evaluate ( X_test_n , y_test_categorical , verbose =0 )
+
+y_test_p_binary = np.where(y_test_categorical > 0.5, 1, 0)
+cm = confusion_matrix(y_test, y_test_p_binary)
+disp = ConfusionMatrixDisplay(cm)
+disp.plot()
+plt.show()
+
